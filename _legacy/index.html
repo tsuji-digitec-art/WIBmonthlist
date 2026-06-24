@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>月例会 管理システム</title>
+<style>
+:root {
+  --bg: #FFF7ED;
+  --white: #ffffff;
+  --border: #FED7AA;
+  --border2: #FDBA74;
+  --text: #1a1d2e;
+  --muted: #78716C;
+  --surface: #ffffff;
+  --surface2: #FFEDD5;
+
+  --member-bg: #eef4ff;
+  --member-border: #c3d5f7;
+  --member-text: #2563eb;
+  --visitor-bg: #fff7ed;
+  --visitor-border: #fed7aa;
+  --visitor-text: #ea580c;
+  --support-bg: #f0fdf4;
+  --support-border: #bbf7d0;
+  --support-text: #15803d;
+  --student-bg: #fdf4ff;
+  --student-border: #e9d5ff;
+  --student-text: #7e22ce;
+
+  --accent: #EA580C;
+  --accent-hover: #C2410C;
+  --danger: #dc2626;
+  --warning: #d97706;
+
+  --status-paypay: #2563eb;
+  --status-cash: #15803d;
+  --status-free: #7e22ce;
+  --status-invoice: #ea580c;
+
+  --r: 10px;
+  --font: 'Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic',Meiryo,sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;font-size:14px}
+
+/* HEADER */
+.header{background:var(--white);border-bottom:2px solid var(--border2);padding:0 24px;display:flex;align-items:center;gap:0;height:54px;position:sticky;top:0;z-index:100}
+.header-logo{font-size:1rem;font-weight:800;color:var(--accent);letter-spacing:-.02em;margin-right:24px;white-space:nowrap}
+.header-month{display:flex;align-items:center;gap:8px;margin-right:auto}
+.month-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.8rem;color:var(--muted);transition:.15s}
+.month-btn:hover{background:var(--surface2);color:var(--text)}
+.month-label{font-size:.95rem;font-weight:700;min-width:96px;text-align:center}
+#monthSelect{font-family:var(--font);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:.8rem;color:var(--text);cursor:pointer}
+.csv-hdr-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:.75rem;font-weight:700;color:var(--accent);cursor:pointer;white-space:nowrap;transition:.15s}
+.csv-hdr-btn:hover{background:var(--border);color:var(--accent-hover)}
+.paste-panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;display:none}
+.paste-panel.open{display:block}
+.paste-textarea{font-family:monospace;font-size:.78rem;width:100%;height:130px;border:1px solid var(--border);border-radius:7px;padding:10px;outline:none;resize:vertical;color:var(--text);background:var(--white)}
+.paste-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(234,88,12,.1)}
+.nav-tabs{display:flex;gap:0;height:100%;margin-left:16px}
+.nav-tab{padding:0 14px;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;display:flex;align-items:center;transition:.15s;white-space:nowrap}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* LAYOUT */
+.wrap{max-width:1200px;margin:0 auto;padding:20px 16px 60px}
+.page{display:none}.page.active{display:block}
+
+/* IMPORT CARD */
+.import-card{background:var(--white);border:2px dashed var(--border2);border-radius:var(--r);padding:10px 20px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:16px;display:flex;align-items:center;gap:12px;justify-content:center}
+.import-card:hover,.import-card.drag{border-color:var(--accent);background:#FFF0E5}
+.import-icon{font-size:1.2rem;margin-bottom:0;flex-shrink:0}
+.import-title{font-size:.85rem;font-weight:700;margin-bottom:0}
+.import-hint{font-size:.72rem;color:var(--muted)}
+#csvFileInput{display:none}
+
+.import-status{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:.82rem;display:none}
+.import-status.ok{border-color:#bbf7d0;background:#f0fdf4;color:#15803d}
+.import-status.err{border-color:#fecaca;background:#fff5f5;color:var(--danger)}
+
+/* SUMMARY ROW */
+.summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+.scard{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:3px}
+.scard-label{font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+.scard-num{font-size:1.8rem;font-weight:900;line-height:1}
+.scard-sub{font-size:.68rem;color:var(--muted);margin-top:3px}
+.scard.member .scard-label{color:var(--member-text)}.scard.member .scard-num{color:var(--member-text)}
+.scard.visitor .scard-label{color:var(--visitor-text)}.scard.visitor .scard-num{color:var(--visitor-text)}
+.scard.support .scard-label{color:var(--support-text)}.scard.support .scard-num{color:var(--support-text)}
+.scard.student .scard-label{color:var(--student-text)}.scard.student .scard-num{color:var(--student-text)}
+
+/* TOP STATS (エントリー＋実来場 2カラム) */
+.top-stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.top-stat-col{display:flex;flex-direction:column;gap:8px}
+.top-main-card{padding:16px 18px}
+.sub-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sub-card{border-radius:8px;padding:10px 14px;border:1px solid}
+
+/* エントリーグループ：ブルー背景 */
+.entry-group .top-main-card{background:#dbeafe;border-color:#93c5fd}
+.entry-group .scard-label{color:#1e40af}
+.entry-group .scard-num{color:#1e40af}
+.entry-group .scard-sub{color:#3b82f6}
+.entry-group .sub-card{background:#dbeafe;border-color:#93c5fd}
+.entry-group .sub-label{color:#1e40af}
+.entry-group .sub-num{color:#1e40af}
+
+/* 実来場グループ：オレンジ背景 */
+.actual-group .top-main-card{background:#ffedd5;border-color:#fdba74}
+.actual-group .scard-label{color:#9a3412}
+.actual-group .scard-num{color:#ea580c}
+.actual-group .scard-sub{color:#c2410c}
+.actual-group .sub-card{background:#ffedd5;border-color:#fdba74}
+.actual-group .sub-label{color:#9a3412}
+.actual-group .sub-num{color:#ea580c}
+.sub-label{font-size:.65rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.sub-num{font-size:1.5rem;font-weight:900;line-height:1}
+
+/* PAYMENT SUMMARY */
+.pay-summary{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:10px 16px;margin-bottom:16px;display:none;flex-wrap:wrap;gap:7px;align-items:center}
+.pay-summary-label{font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-right:2px}
+.pay-chip{font-size:.73rem;font-weight:700;padding:3px 10px;border-radius:999px}
+.pay-chip.paypay{background:#dbeafe;color:var(--status-paypay)}
+.pay-chip.cash{background:#dcfce7;color:var(--status-cash)}
+.pay-chip.free{background:#f3e8ff;color:var(--status-free)}
+.pay-chip.invoice{background:#ffedd5;color:var(--status-invoice)}
+.pay-chip.unset{background:#f3f4f6;color:#9ca3af}
+.pay-divider{width:1px;height:18px;background:var(--border);margin:0 2px}
+.pay-total{font-size:.75rem;font-weight:800;color:var(--text)}
+
+/* SEARCH */
+.search-wrap{margin-bottom:16px;display:flex;gap:8px;align-items:center}
+.search-input{font-family:var(--font);background:var(--white);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:.85rem;color:var(--text);outline:none;flex:1;max-width:320px;transition:.15s}
+.search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(234,88,12,.12)}
+.search-clear{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.8rem;padding:4px 8px;border-radius:6px}
+.search-clear:hover{background:var(--surface2)}
+.search-result{font-size:.75rem;color:var(--muted)}
+
+/* SECTION */
+.section{background:var(--white);border:1px solid var(--border);border-radius:var(--r);margin-bottom:16px;overflow:hidden}
+.section-header{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.section-title{font-size:.82rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.section-count{font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px}
+.section.member .section-title{color:var(--member-text)}.section.member .section-count{background:var(--member-bg);color:var(--member-text)}
+.section.visitor .section-title{color:var(--visitor-text)}.section.visitor .section-count{background:var(--visitor-bg);color:var(--visitor-text)}
+.section.support .section-title{color:var(--support-text)}.section.support .section-count{background:var(--support-bg);color:var(--support-text)}
+.section.student .section-title{color:var(--student-text)}.section.student .section-count{background:var(--student-bg);color:var(--student-text)}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead th{background:var(--surface2);padding:8px 12px;text-align:left;font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;border-bottom:1px solid var(--border)}
+tbody td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface2)}
+.td-num{color:var(--muted);font-size:.75rem;width:28px}
+.td-name{font-weight:600;white-space:nowrap;min-width:90px}
+.td-company{color:var(--muted);font-size:.8rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-kana{color:var(--muted);font-size:.75rem;white-space:nowrap;min-width:80px}
+
+/* DUPLICATE ROW */
+.dup-row td{background:#fef9c3 !important}
+.dup-badge{display:inline-flex;align-items:center;gap:3px;font-size:.63rem;font-weight:800;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;padding:1px 6px;border-radius:4px;vertical-align:middle}
+
+/* EDIT ROW */
+.editing-row td{background:#f0f9ff !important}
+.edit-input{font-family:var(--font);border:1px solid var(--border);border-radius:5px;padding:4px 7px;font-size:.82rem;color:var(--text);outline:none;width:100%;min-width:70px}
+.edit-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(234,88,12,.1)}
+
+/* STATUS BADGE */
+.status-sel{font-family:var(--font);font-size:.72rem;font-weight:700;border:none;border-radius:6px;padding:4px 8px;cursor:pointer;outline:none;transition:.15s}
+.status-sel.paypay{background:#dbeafe;color:var(--status-paypay)}
+.status-sel.cash{background:#dcfce7;color:var(--status-cash)}
+.status-sel.free{background:#f3e8ff;color:var(--status-free)}
+.status-sel.invoice{background:#ffedd5;color:var(--status-invoice)}
+.status-sel.unset{background:#f3f4f6;color:#9ca3af}
+
+/* FEE CELL (inline editable amount) */
+.fee-cell{font-family:var(--font);font-size:.8rem;font-weight:700;color:var(--text);border:1px solid transparent;border-radius:5px;padding:3px 6px;width:74px;text-align:right;background:transparent;outline:none;-moz-appearance:textfield}
+.fee-cell::-webkit-outer-spin-button,.fee-cell::-webkit-inner-spin-button{-webkit-appearance:none}
+.fee-cell:hover:not(:disabled){background:var(--surface2);border-color:var(--border);cursor:text}
+.fee-cell:focus{background:var(--white);border-color:var(--accent);box-shadow:0 0 0 2px rgba(234,88,12,.1)}
+.fee-cell:disabled{opacity:.45}
+.fee-cell.overridden{color:var(--accent);font-style:italic}
+
+/* AMOUNT BAR */
+.amount-bar{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:10px 16px;margin-bottom:8px;display:none;flex-wrap:wrap;gap:10px;align-items:center}
+.amount-item{display:flex;flex-direction:column;gap:1px}
+.amount-item-label{font-size:.63rem;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.amount-item-val{font-size:.95rem;font-weight:900;color:var(--text)}
+.amount-item-val.ok{color:var(--support-text)}
+.amount-item-val.pending{color:var(--warning)}
+.amount-item-val.total{color:var(--accent)}
+
+/* ROW ACTION MENU (⋯) */
+.row-menu-wrap{position:relative;display:inline-block}
+.row-menu-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;padding:2px 8px;border-radius:6px;line-height:1;font-weight:900;letter-spacing:.05em}
+.row-menu-btn:hover{background:var(--surface2);color:var(--text)}
+.row-menu-dd{position:absolute;right:0;top:calc(100% + 2px);background:var(--white);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:200;min-width:100px;overflow:hidden;display:none}
+.row-menu-dd.open{display:block}
+.row-menu-item{display:block;width:100%;padding:9px 16px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;background:none;text-align:left;font-family:var(--font);color:var(--text);white-space:nowrap}
+.row-menu-item:hover{background:var(--surface2)}
+.row-menu-item.danger{color:var(--danger)}
+
+/* FEE SETTINGS PANEL */
+.fee-panel{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;display:none}
+.fee-panel.open{display:block}
+.fee-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.fee-field{display:flex;flex-direction:column;gap:4px}
+.fee-field label{font-size:.7rem;font-weight:700;color:var(--muted)}
+.fee-input{font-family:var(--font);border:1px solid var(--border);border-radius:6px;padding:5px 9px;font-size:.85rem;color:var(--text);outline:none;width:100%}
+.fee-input:focus{border-color:var(--accent)}
+
+/* VISIT BADGE */
+.visit-badge{font-size:.7rem;font-weight:800;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.visit-badge.v1{background:#dbeafe;color:#1d4ed8}
+.visit-badge.v2{background:#fce7f3;color:#9d174d}
+.visit-badge.v3{background:#ffedd5;color:#c2410c}
+
+/* LIST GRID (横並び) */
+.list-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:start}
+.list-col{display:flex;flex-direction:column;gap:14px}
+.list-grid .section{margin-bottom:0}
+
+/* DRAG AND DROP */
+.section.drag-over{outline:2px dashed var(--accent);background:rgba(234,88,12,.03)}
+tr[draggable="true"]{cursor:grab}
+tr[draggable="true"]:active{cursor:grabbing}
+
+/* EMPTY */
+.empty-state{padding:32px;text-align:center;color:var(--muted);font-size:.85rem}
+
+/* VISITOR PASTE BOX */
+.vc-paste-box{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;margin-bottom:16px}
+.vc-paste-label{font-size:.78rem;font-weight:700;color:var(--text);margin-bottom:8px}
+.vc-paste-hint{font-size:.7rem;color:var(--muted);margin:6px 0 10px}
+
+/* VISITOR CHECK TAB */
+.vc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.vc-col{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.vc-head{padding:10px 14px;font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--border)}
+.vc-col.vc1 .vc-head{color:#1d4ed8;background:#eff6ff}
+.vc-col.vc2 .vc-head{color:#9d174d;background:#fdf2f8}
+.vc-col.vc3 .vc-head{color:#c2410c;background:#fff7ed}
+.vc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.vc-col.vc1 .vc-dot{background:#2563eb}.vc-col.vc2 .vc-dot{background:#db2777}.vc-col.vc3 .vc-dot{background:#ea580c}
+.vc-body{padding:8px;display:flex;flex-direction:column;gap:5px;max-height:340px;overflow-y:auto}
+.vc-chip{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 11px;font-size:.82rem;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.vc-chip .company{font-size:.7rem;color:var(--muted);margin-top:1px}
+
+/* MASTER BAR */
+.master-bar{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.master-bar-label{font-size:.72rem;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.master-count{font-size:.78rem;font-weight:700;color:var(--text);flex:1;min-width:160px}
+
+/* RANKING TAB */
+.rank-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.rank-table th{background:var(--surface2);padding:8px 12px;text-align:left;font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.05em;border-bottom:1px solid var(--border)}
+.rank-table td{padding:8px 12px;border-bottom:1px solid var(--border)}
+.rank-table tr:last-child td{border-bottom:none}
+.rank-table tr:hover td{background:var(--surface2)}
+.rank-num{font-weight:800;color:var(--muted)}
+.rank-gold{color:#d97706}.rank-silver{color:#6b7280}.rank-bronze{color:#92400e}
+.month-pips{display:flex;flex-wrap:wrap;gap:3px}
+.month-pip{width:9px;height:9px;border-radius:2px;background:var(--accent);opacity:.6;cursor:default}
+
+/* GRAPH TAB */
+.graph-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:16px}
+.graph-title{font-size:.75rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.bar-chart{display:flex;align-items:flex-end;gap:8px;overflow-x:auto;padding-bottom:4px;min-height:160px}
+.bar-group{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:44px}
+.bar-val{font-size:.68rem;color:var(--muted);font-weight:700}
+.bar-stack{display:flex;flex-direction:column;align-items:center;width:100%;gap:1px}
+.bar-seg{width:100%;border-radius:2px;min-height:3px;transition:height .4s}
+.bar-lbl{font-size:.62rem;color:var(--muted);white-space:nowrap}
+.graph-legend{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted)}
+.legend-dot{width:10px;height:10px;border-radius:2px}
+
+/* CONNECTION BADGE */
+.conn-badge{font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:999px;margin-left:10px;vertical-align:middle}
+.conn-ok{background:#dcfce7;color:#15803d}
+.conn-err{background:#fee2e2;color:#dc2626}
+.conn-local{background:#f3f4f6;color:#6b7280}
+
+/* FIREBASE CARD */
+.fb-card{background:var(--white);border:2px solid var(--border2);border-radius:var(--r);padding:20px;margin-bottom:16px}
+.fb-card-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.fb-card-title{font-size:.92rem;font-weight:800}
+.fb-steps{background:var(--surface2);border-radius:8px;padding:14px 16px;font-size:.78rem;line-height:1.9;margin-bottom:14px;color:var(--text)}
+.fb-steps code{background:#fff;border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:.75rem;color:var(--accent)}
+.fb-textarea{font-family:monospace;font-size:.75rem;width:100%;height:110px;border:1px solid var(--border);border-radius:7px;padding:10px;outline:none;resize:vertical;color:var(--text);background:var(--white)}
+.fb-textarea:focus{border-color:var(--accent)}
+.fb-btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.fb-status-text{font-size:.75rem;color:var(--muted)}
+
+/* BACKUP TAB */
+.backup-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.backup-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:24px}
+.backup-icon{font-size:2rem;margin-bottom:12px}
+.backup-card-title{font-size:.92rem;font-weight:800;margin-bottom:6px}
+.backup-card-desc{font-size:.78rem;color:var(--muted);margin-bottom:16px;line-height:1.65}
+.backup-card-desc strong{color:var(--danger)}
+.backup-info-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-top:16px}
+.backup-info-row{display:flex;justify-content:space-between;align-items:center;font-size:.78rem;padding:4px 0;border-bottom:1px solid var(--border)}
+.backup-info-row:last-child{border-bottom:none}
+.backup-info-label{color:var(--muted)}
+.backup-info-val{font-weight:700}
+#jsonFileInput{display:none}
+
+/* BUTTONS */
+button,select{font-family:var(--font)}
+.btn{border:none;border-radius:7px;padding:8px 18px;font-size:.82rem;font-weight:700;cursor:pointer;transition:.15s}
+.btn:active{transform:scale(.97)}
+.btn-p{background:var(--accent);color:#fff}.btn-p:hover{background:var(--accent-hover)}
+.btn-s{background:var(--surface2);border:1px solid var(--border);color:var(--muted)}.btn-s:hover{color:var(--text)}
+.btn-d{background:#fff5f5;border:1px solid #fecaca;color:var(--danger)}.btn-d:hover{background:#fee2e2}
+.btn-row{display:flex;gap:8px;align-items:center;margin-left:auto}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--text);color:#fff;padding:9px 18px;border-radius:8px;font-size:.82rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* MANUAL ADD */
+.manual-form{padding:14px 16px;background:var(--surface2);border-top:1px solid var(--border);display:none}
+.manual-form.open{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.mf-field{display:flex;flex-direction:column;gap:4px}
+.mf-label{font-size:.68rem;color:var(--muted);font-weight:700}
+.mf-input{font-family:var(--font);background:var(--white);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:.82rem;color:var(--text);outline:none}
+.mf-input:focus{border-color:var(--accent)}
+
+@media(max-width:700px){
+  .top-stats{grid-template-columns:1fr}
+  .list-grid{grid-template-columns:1fr}
+  .vc-grid{grid-template-columns:1fr}
+  .nav-tab{padding:0 9px;font-size:.74rem}
+  .header-logo{font-size:.85rem;margin-right:10px}
+  .backup-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">月例会 管理</div>
+  <div class="header-month">
+    <button class="month-btn" onclick="shiftMonth(-1)">◀</button>
+    <span class="month-label" id="headerMonthLabel"></span>
+    <button class="month-btn" onclick="shiftMonth(1)">▶</button>
+    <select id="monthSelect" onchange="jumpMonth()"></select>
+    <label for="csvFileInput" class="csv-hdr-btn" title="CSVをインポート">📥 CSV</label>
+  </div>
+  <span id="connStatus" class="conn-badge conn-local" style="display:none">● ローカル保存</span>
+  <nav class="nav-tabs">
+    <div class="nav-tab active" data-tab="list" onclick="switchTab(this)">出席リスト</div>
+    <div class="nav-tab" data-tab="visitor" onclick="switchTab(this)">ビジター来場回数</div>
+    <div class="nav-tab" data-tab="ranking" onclick="switchTab(this)">累計ランキング</div>
+    <div class="nav-tab" data-tab="graph" onclick="switchTab(this)">グラフ</div>
+    <div class="nav-tab" data-tab="backup" onclick="switchTab(this)">バックアップ</div>
+  </nav>
+</div>
+
+<div class="wrap">
+
+  <!-- ====== LIST TAB ====== -->
+  <div class="page active" id="page-list">
+
+    <input type="file" id="csvFileInput" accept=".csv,.tsv,text/csv,text/tab-separated-values" onchange="importCSV(this)" style="display:none">
+    <div id="importStatus" class="import-status"></div>
+
+    <div class="paste-panel" id="pastePanel">
+      <div style="font-size:.75rem;font-weight:800;color:var(--muted);letter-spacing:.05em;margin-bottom:8px">📋 テキスト貼り付けインポート</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">スプレッドシートからコピーしたデータをそのまま貼り付けてください（タブ区切り・CSV形式どちらも可）</div>
+      <textarea class="paste-textarea" id="pasteInput" placeholder="【名前のみ（全員ビジター扱い）】&#10;荒駒 晃&#10;田中 太郎&#10;&#10;【ヘッダーあり（種別自動判定）】&#10;お名前&#9;フリガナ&#9;所属&#9;会員種別&#10;田中 太郎&#9;タナカタロウ&#9;株式会社〇〇&#9;正会員"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-p" onclick="importPaste()">📋 インポート</button>
+        <button class="btn btn-s" onclick="togglePastePanel()">閉じる</button>
+      </div>
+    </div>
+
+    <div class="top-stats">
+      <div class="top-stat-col entry-group">
+        <div class="scard top-main-card">
+          <div class="scard-label">月次エントリー数</div>
+          <div class="scard-num" id="s_entry">0</div>
+          <div class="scard-sub">名（CSVのみ）</div>
+        </div>
+        <div class="sub-grid">
+          <div class="sub-card"><div class="sub-label">正会員</div><div class="sub-num" id="s_member">0</div></div>
+          <div class="sub-card"><div class="sub-label">ビジター</div><div class="sub-num" id="s_visitor">0</div></div>
+          <div class="sub-card"><div class="sub-label">支援機関</div><div class="sub-num" id="s_support">0</div></div>
+          <div class="sub-card"><div class="sub-label">学生</div><div class="sub-num" id="s_student">0</div></div>
+        </div>
+      </div>
+      <div class="top-stat-col actual-group">
+        <div class="scard top-main-card">
+          <div class="scard-label">実来場者数</div>
+          <div class="scard-num" id="s_actual">0</div>
+          <div class="scard-sub">名（PayPay・現金・無料・後日請求）</div>
+        </div>
+        <div class="sub-grid">
+          <div class="sub-card"><div class="sub-label">正会員</div><div class="sub-num" id="s_member_act">0</div></div>
+          <div class="sub-card"><div class="sub-label">ビジター</div><div class="sub-num" id="s_visitor_act">0</div></div>
+          <div class="sub-card"><div class="sub-label">支援機関</div><div class="sub-num" id="s_support_act">0</div></div>
+          <div class="sub-card"><div class="sub-label">学生</div><div class="sub-num" id="s_student_act">0</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pay-summary" id="paySummary"></div>
+
+    <div class="amount-bar" id="amountBar"></div>
+
+    <div class="fee-panel" id="feePanel">
+      <div id="feePanelTitle" style="font-size:.75rem;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px">⚙ 参加費設定（円）</div>
+      <div class="fee-grid">
+        <div class="fee-field"><label>正会員</label><input class="fee-input" id="fee-member" type="number" min="0"></div>
+        <div class="fee-field"><label>ビジター（1回目）</label><input class="fee-input" id="fee-v1" type="number" min="0"></div>
+        <div class="fee-field"><label>ビジター（2回目）</label><input class="fee-input" id="fee-v2" type="number" min="0"></div>
+        <div class="fee-field"><label>ビジター（3回以降）</label><input class="fee-input" id="fee-v3plus" type="number" min="0"></div>
+        <div class="fee-field"><label>支援機関</label><input class="fee-input" id="fee-support" type="number" min="0"></div>
+        <div class="fee-field"><label>学生</label><input class="fee-input" id="fee-student" type="number" min="0"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" onclick="saveFeeSettings()">保存</button>
+        <button class="btn btn-s" onclick="toggleFeeSettings()">閉じる</button>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <input type="text" class="search-input" id="searchInput"
+             placeholder="🔍 氏名・フリガナ・所属で検索..."
+             oninput="onSearch()"
+             onkeydown="if(event.key==='Escape')clearSearch()">
+      <button class="search-clear" id="searchClearBtn" onclick="clearSearch()" style="display:none">✕ クリア</button>
+      <span class="search-result" id="searchResult"></span>
+    </div>
+
+    <div id="listArea"></div>
+
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-s" onclick="exportCurrentCSV()">📤 この月のCSVエクスポート</button>
+      <button class="btn btn-d" style="margin-left:auto" onclick="confirmDeleteMonth()">この月のデータを削除</button>
+    </div>
+  </div>
+
+  <!-- ====== VISITOR CHECK TAB ====== -->
+  <div class="page" id="page-visitor">
+
+    <div class="vc-paste-box">
+      <div class="vc-paste-label">名前を入力（1行に1名ずつ）</div>
+      <textarea class="paste-textarea" id="vcPasteInput" style="height:120px"
+        placeholder="田中太郎&#10;山田 花子&#10;佐藤　一郎&#10;鈴木次郎"></textarea>
+      <div class="vc-paste-hint">スペース（半角・全角）は自動で除去されます。複数名を一度に貼り付けOK。</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" onclick="registerVisitorPaste()">登録する</button>
+        <button class="btn btn-s" onclick="document.getElementById('vcPasteInput').value=''">クリア</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+      <div class="scard visitor"><div class="scard-label">1回目</div><div class="scard-num" id="vc_cnt1">0</div></div>
+      <div class="scard" style="border-color:var(--student-border)"><div class="scard-label" style="color:var(--student-text)">2回目</div><div class="scard-num" style="color:var(--student-text)" id="vc_cnt2">0</div></div>
+      <div class="scard" style="border-color:var(--visitor-border)"><div class="scard-label" style="color:#c2410c">3回以上</div><div class="scard-num" style="color:#c2410c" id="vc_cnt3">0</div></div>
+    </div>
+    <div class="vc-grid" id="vcGrid"></div>
+  </div>
+
+  <!-- ====== RANKING TAB ====== -->
+  <div class="page" id="page-ranking">
+
+    <div class="master-bar">
+      <span class="master-bar-label">全会員マスタ</span>
+      <span id="masterCount" class="master-count">未登録（登録するとランキングに全員表示）</span>
+      <label for="masterCsvInput" class="btn btn-p" style="font-size:.72rem;padding:4px 12px;cursor:pointer">📥 CSVインポート</label>
+      <button class="btn btn-d" style="font-size:.72rem;padding:4px 10px" onclick="clearMasterList()">クリア</button>
+      <input type="file" id="masterCsvInput" accept=".csv" onchange="importMasterCSV(this)" style="display:none">
+      <button class="btn btn-s" style="font-size:.72rem;padding:4px 10px" onclick="toggleMasterAddForm()">＋ 手動追加</button>
+      <span style="font-size:.7rem;color:var(--muted)">※ NO／入会年月／会員区分／氏名／よみ／会社名 列のCSV可</span>
+    </div>
+
+    <div class="manual-form" id="masterAddForm">
+      <div class="mf-field"><div class="mf-label">氏名 <span style="color:var(--danger)">*</span></div><input class="mf-input" id="ma-name" placeholder="田中 太郎" style="width:120px" onkeydown="if(event.key==='Enter')addMasterMember()"></div>
+      <div class="mf-field"><div class="mf-label">フリガナ</div><input class="mf-input" id="ma-kana" placeholder="タナカタロウ" style="width:120px" onkeydown="if(event.key==='Enter')addMasterMember()"></div>
+      <div class="mf-field"><div class="mf-label">会社名</div><input class="mf-input" id="ma-company" placeholder="株式会社〇〇" style="width:150px" onkeydown="if(event.key==='Enter')addMasterMember()"></div>
+      <div class="mf-field"><div class="mf-label">会員区分</div><input class="mf-input" id="ma-type" placeholder="正会員B" style="width:100px" onkeydown="if(event.key==='Enter')addMasterMember()"></div>
+      <button class="btn btn-p" onclick="addMasterMember()">追加</button>
+      <button class="btn btn-s" onclick="toggleMasterAddForm()">閉じる</button>
+    </div>
+
+    <div class="section">
+      <div class="section-header member">
+        <div class="section-title" style="color:var(--member-text)">月例会来場率</div>
+        <div class="section-count" style="background:var(--member-bg);color:var(--member-text);font-size:.68rem">PayPay・現金決済確認済のみ集計</div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="rank-table">
+          <thead id="rankThead"><tr><th>#</th><th>氏名</th><th>フリガナ</th><th>所属</th><th>合計</th></tr></thead>
+          <tbody id="rankTbody"></tbody>
+        </table>
+        <div class="empty-state" id="rankEmpty">実来場データがありません（PayPay/現金決済済のデータが必要です）</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== GRAPH TAB ====== -->
+  <div class="page" id="page-graph">
+    <div class="graph-card">
+      <div class="graph-title">月別 参加人数の推移</div>
+      <div class="bar-chart" id="graph1"></div>
+      <div class="graph-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#2563eb"></div>正会員</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ea580c"></div>ビジター</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#15803d"></div>支援機関</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#7e22ce"></div>学生</div>
+      </div>
+    </div>
+    <div class="graph-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="graph-title" style="margin-bottom:0">会員参加率（月別）</div>
+        <button class="btn btn-s" style="font-size:.7rem;padding:3px 10px" onclick="toggleMemberCountPanel()">⚙ 会員数設定</button>
+      </div>
+      <div id="memberCountPanel" style="display:none;background:var(--surface2);border-radius:8px;padding:12px 16px;margin-bottom:14px"></div>
+      <div class="bar-chart" id="graph2"></div>
+      <div class="graph-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#2563eb"></div>80%以上</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ea580c"></div>60〜79%</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#d97706"></div>40〜59%</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div>40%未満</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#d1d5db"></div>会員数未設定</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== BACKUP TAB ====== -->
+  <div class="page" id="page-backup">
+
+    <div class="fb-card">
+      <div class="fb-card-head">
+        <span style="font-size:1.4rem">🔥</span>
+        <span class="fb-card-title">リアルタイム共有（Firebase）</span>
+        <span id="fbBadge" class="conn-badge conn-local">未接続</span>
+      </div>
+      <div class="fb-steps">
+        <strong>初回設定手順（5分）</strong><br>
+        ① <a href="https://console.firebase.google.com/" target="_blank" style="color:var(--accent)">Firebase Console</a> を開き「プロジェクトを作成」<br>
+        ② 左メニュー「構築」→「Realtime Database」→「データベースを作成」→ロックモードで作成<br>
+        ③「ルール」タブを開き <code>".read":true, ".write":true</code> に書き換えて「公開」<br>
+        ④ ⚙ 設定「全般」→「マイアプリ」→「&lt;/&gt; Web」→アプリ登録→<strong>「firebaseConfig」をコピー</strong><br>
+        ⑤ 下のテキストエリアに貼り付けて「接続する」
+      </div>
+      <textarea class="fb-textarea" id="fbConfigInput" placeholder='{"apiKey":"AIza...","authDomain":"xxx.firebaseapp.com","databaseURL":"https://xxx-default-rtdb.firebaseio.com","projectId":"xxx","storageBucket":"xxx.appspot.com","messagingSenderId":"000","appId":"1:000:web:000"}'></textarea>
+      <div class="fb-btns">
+        <button class="btn btn-p" onclick="connectFirebase()">🔥 接続する</button>
+        <button class="btn btn-d" onclick="disconnectFirebase()">切断</button>
+        <span class="fb-status-text" id="fbStatusText">設定を貼り付けて「接続する」を押してください</span>
+      </div>
+    </div>
+
+    <div class="backup-grid">
+      <div class="backup-card">
+        <div class="backup-icon">💾</div>
+        <div class="backup-card-title">全データを保存</div>
+        <div class="backup-card-desc">すべての月のデータをJSONファイルとしてダウンロードします。ブラウザを変更する際や、PCを乗り換える際に使用してください。</div>
+        <button class="btn btn-p" onclick="exportJSON()">📥 JSONでダウンロード</button>
+        <div class="backup-info-box" id="backupInfo"></div>
+      </div>
+      <div class="backup-card">
+        <div class="backup-icon">📂</div>
+        <div class="backup-card-title">データを復元</div>
+        <div class="backup-card-desc">保存したJSONファイルからデータを復元します。<strong>現在のデータはすべて上書きされます。</strong>復元前に必ずバックアップを取ってください。</div>
+        <button class="btn btn-s" onclick="document.getElementById('jsonFileInput').click()">📤 JSONから復元</button>
+        <input type="file" id="jsonFileInput" accept=".json" onchange="importJSON(this)">
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================
+// DATA MODEL
+// localStorage keys:
+//   meeting_months_v1   -> { "2025-04": [attendee,...], ... }
+//   meeting_statuses_v1 -> { "2025-04:正規化名": "paypay"|"cash"|... }
+//   meeting_last_backup -> ISO timestamp
+//
+// attendee: { name, kana, company, industry, type, email }
+// type: "正会員"|"ビジター"|"支援機関"|"学生"
+// =====================================================
+
+const DATA_KEY   = 'meeting_months_v1';
+const STATUS_KEY = 'meeting_statuses_v1';
+const BACKUP_KEY = 'meeting_last_backup';
+const FB_CONF_KEY= 'meeting_fb_config';
+
+// ---- IN-MEMORY CACHE (Firebase or localStorage) ----
+let _data = {};
+let _statuses = {};
+let _db = null;
+
+function loadData(){ return _data; }
+function saveData(d){
+  _data = d;
+  if(_db) _db.ref('data').set(d);
+  else localStorage.setItem(DATA_KEY, JSON.stringify(d));
+}
+function loadStatuses(){ return _statuses; }
+function saveStatuses(s){
+  _statuses = s;
+  if(_db) _db.ref('statuses').set(s);
+  else localStorage.setItem(STATUS_KEY, JSON.stringify(s));
+}
+
+function _loadLocal(){
+  try{ _data     = JSON.parse(localStorage.getItem(DATA_KEY)||'{}'); }catch{ _data={}; }
+  try{ _statuses = JSON.parse(localStorage.getItem(STATUS_KEY)||'{}'); }catch{ _statuses={}; }
+}
+
+// ---- FIREBASE ----
+function connectFirebase(){
+  const raw = document.getElementById('fbConfigInput').value.trim();
+  if(!raw){ showToast('設定を入力してください'); return; }
+  let cfg;
+  try{ cfg = JSON.parse(raw); }catch{ showToast('JSONの形式が正しくありません'); return; }
+  if(!cfg.databaseURL){ showToast('databaseURL がありません。Realtime Database の設定か確認してください'); return; }
+  _initFirebase(cfg);
+}
+
+function _initFirebase(cfg){
+  try{
+    if(typeof firebase === 'undefined'){ showToast('Firebase SDK を読み込み中です。しばらく待って再試行してください'); return; }
+    if(!firebase.apps.length) firebase.initializeApp(cfg);
+    _db = firebase.database();
+
+    _db.ref('/').on('value', snap => {
+      const v = snap.val()||{};
+      _data     = v.data     || {};
+      _statuses = v.statuses || {};
+      renderAll();
+    }, err => {
+      _setFbStatus(false, 'エラー: '+err.message);
+    });
+
+    firebase.database().ref('.info/connected').on('value', snap => {
+      const ok = snap.val()===true;
+      _setFbStatus(ok, ok ? 'リアルタイム接続中' : '再接続中...');
+      if(ok) localStorage.setItem(FB_CONF_KEY, JSON.stringify(cfg));
+    });
+
+    document.getElementById('fbStatusText').textContent = '接続中...';
+  }catch(e){
+    showToast('Firebase初期化エラー: '+e.message);
+    _setFbStatus(false, 'エラー: '+e.message);
+  }
+}
+
+function disconnectFirebase(){
+  if(!_db){ showToast('接続されていません'); return; }
+  if(!confirm('Firebaseから切断しますか？ローカル保存モードに戻ります。')) return;
+  _db.goOffline();
+  _db = null;
+  localStorage.removeItem(FB_CONF_KEY);
+  _loadLocal();
+  _setFbStatus(null, '切断しました');
+  renderAll();
+  showToast('ローカル保存モードに切り替えました');
+}
+
+function _setFbStatus(connected, text){
+  const badge  = document.getElementById('fbBadge');
+  const hbadge = document.getElementById('connStatus');
+  const stText = document.getElementById('fbStatusText');
+  if(stText) stText.textContent = text||'';
+  if(connected===null){
+    const cls='conn-local'; const lbl='● ローカル保存';
+    if(badge){ badge.className='conn-badge '+cls; badge.textContent=lbl; }
+    if(hbadge){ hbadge.className='conn-badge '+cls; hbadge.textContent=lbl; hbadge.style.display=''; }
+  }else if(connected){
+    const cls='conn-ok'; const lbl='● リアルタイム接続中';
+    if(badge){ badge.className='conn-badge '+cls; badge.textContent=lbl; }
+    if(hbadge){ hbadge.className='conn-badge '+cls; hbadge.textContent=lbl; hbadge.style.display=''; }
+  }else{
+    const cls='conn-err'; const lbl='○ 切断中';
+    if(badge){ badge.className='conn-badge '+cls; badge.textContent=lbl; }
+    if(hbadge){ hbadge.className='conn-badge '+cls; hbadge.textContent=lbl; hbadge.style.display=''; }
+  }
+}
+
+// 異体字・旧字体を標準字体に統一するマップ
+const KANJI_NORM={'髙':'高','眞':'真','濵':'浜','濱':'浜','﨑':'崎','塚':'塚','德':'徳','黑':'黒','國':'国','號':'号','廣':'広','學':'学','體':'体','澤':'沢'};
+function normName(s){
+  let r=(s||'').replace(/[\s　\t]/g,'');
+  for(const[v,n]of Object.entries(KANJI_NORM)) r=r.split(v).join(n);
+  return r;
+}
+
+// ---- MONTHS ----
+function genMonths(startY,startM){
+  const months=[];
+  let y=startY,m=startM;
+  const now=new Date();
+  const endY=now.getFullYear()+3;
+  while(y<endY){
+    months.push(`${y}-${String(m).padStart(2,'0')}`);
+    m++; if(m>12){m=1;y++;}
+  }
+  return months;
+}
+function fmtMonth(ym){ const[y,m]=ym.split('-'); return `${y}年${parseInt(m)}月`; }
+
+const ALL_MONTHS   = genMonths(2025,4); // ビジター来場回数・ランキング計算用（2025年4月〜）
+const NAV_MONTHS   = genMonths(2025,4); // 出席リスト ナビゲーション用（2025年4月〜）
+const GRAPH_MONTHS = genMonths(2026,4); // グラフ表示用（2026年4月〜）
+const _now = new Date();
+let currentMonth = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}`;
+let searchQuery  = '';
+
+function initMonthUI(){
+  const sel=document.getElementById('monthSelect');
+  sel.innerHTML=NAV_MONTHS.map(m=>`<option value="${m}">${fmtMonth(m)}</option>`).join('');
+  sel.value=currentMonth;
+  document.getElementById('headerMonthLabel').textContent=fmtMonth(currentMonth);
+}
+function shiftMonth(dir){
+  const idx=NAV_MONTHS.indexOf(currentMonth);
+  const ni=Math.max(0,Math.min(NAV_MONTHS.length-1,idx+dir));
+  currentMonth=NAV_MONTHS[ni];
+  document.getElementById('monthSelect').value=currentMonth;
+  document.getElementById('headerMonthLabel').textContent=fmtMonth(currentMonth);
+  renderAll();
+}
+function jumpMonth(){
+  currentMonth=document.getElementById('monthSelect').value;
+  document.getElementById('headerMonthLabel').textContent=fmtMonth(currentMonth);
+  renderAll();
+}
+
+// ---- PASTE IMPORT ----
+function togglePastePanel(){
+  const p=document.getElementById('pastePanel');
+  const willOpen=!p.classList.contains('open');
+  p.classList.toggle('open');
+  if(willOpen) setTimeout(()=>document.getElementById('pasteInput')?.focus(),50);
+}
+
+function importPaste(){
+  const raw=document.getElementById('pasteInput').value.trim().replace(/^﻿/,'');
+  if(!raw){showToast('データを貼り付けてください');return;}
+
+  // 1行目にヘッダーキーワードがあれば通常CSVパース
+  const firstLine=raw.split(/\r?\n/)[0];
+  const HEADER_KEYS=['名前','氏名','お名前','name','会員','種別','type','フリガナ','所属'];
+  const hasHeader=HEADER_KEYS.some(k=>firstLine.includes(k));
+
+  if(hasHeader){
+    parseCsvText(raw);
+  }else{
+    importNamesAsVisitor(raw);
+  }
+  document.getElementById('pasteInput').value='';
+  document.getElementById('pastePanel').classList.remove('open');
+}
+
+function importNamesAsVisitor(text){
+  const delim=text.split(/\r?\n/)[0].includes('\t')?'\t':',';
+  const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l);
+  if(lines.length===0){showToast('データが見つかりません');return;}
+
+  const attendees=[];
+  for(const line of lines){
+    const cols=line.split(delim);
+    const name=(cols[0]||'').trim().replace(/^["']|["']$/g,'');
+    if(!name)continue;
+    const kana=(cols[1]||'').trim().replace(/^["']|["']$/g,'');
+    const company=(cols[2]||'').trim().replace(/^["']|["']$/g,'');
+    attendees.push({name,kana,company,industry:'',type:'ビジター',email:''});
+  }
+  if(attendees.length===0){showToast('有効な名前が見つかりませんでした');return;}
+
+  const data=loadData();
+  const existing=data[currentMonth]||[];
+  const existingKeys=new Set(existing.map(a=>normName(a.name)+'|'+a.type));
+  const newOnes=attendees.filter(a=>!existingKeys.has(normName(a.name)+'|'+a.type));
+  data[currentMonth]=[...existing,...newOnes];
+  saveData(data);
+
+  const skipped=attendees.length-newOnes.length;
+  showStatus(
+    `${newOnes.length}名をビジターとしてインポートしました（${fmtMonth(currentMonth)}）`+
+    (skipped>0?`。重複 ${skipped}名はスキップ。`:''),
+    'ok'
+  );
+  renderAll();
+}
+
+// ---- SEARCH ----
+function onSearch(){
+  searchQuery=document.getElementById('searchInput').value.trim();
+  document.getElementById('searchClearBtn').style.display=searchQuery?'':'none';
+  renderList();
+}
+function clearSearch(){
+  searchQuery='';
+  document.getElementById('searchInput').value='';
+  document.getElementById('searchClearBtn').style.display='none';
+  document.getElementById('searchResult').textContent='';
+  renderList();
+}
+
+// ---- CSV IMPORT ----
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('importCard').classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(file) parseFile(file);
+}
+function importCSV(input){
+  const file=input.files[0];
+  if(file) parseFile(file);
+  input.value='';
+}
+function parseFile(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const text=decodeBuffer(e.target.result);
+    parseCsvText(text.replace(/^﻿/,''));
+  };
+  reader.onerror=()=>showStatus('ファイルの読み込みに失敗しました。','err');
+  reader.readAsArrayBuffer(file);
+}
+
+function decodeBuffer(buffer){
+  const bytes=new Uint8Array(buffer);
+  if(bytes.length>=3&&bytes[0]===0xEF&&bytes[1]===0xBB&&bytes[2]===0xBF){
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+  try{ return new TextDecoder('utf-8',{fatal:true}).decode(bytes); }catch(_){}
+  try{ return new TextDecoder('shift_jis').decode(bytes); }catch(_){}
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
+function parseCsvFull(text,delim){
+  const rows=[];
+  let row=[],cur='',inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(inQ){
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;}else inQ=false; }
+      else cur+=c;
+    }else{
+      if(c==='"') inQ=true;
+      else if(c===delim){row.push(cur);cur='';}
+      else if(c==='\r'){/* skip */}
+      else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}
+      else cur+=c;
+    }
+  }
+  if(cur!==''||row.length>0){row.push(cur);rows.push(row);}
+  return rows;
+}
+
+function parseCsvText(text){
+  if(!text.trim()){showStatus('データが見つかりません','err');return;}
+  const firstLine=text.split(/\r?\n/)[0];
+  const delim=firstLine.includes('\t')?'\t':',';
+  const allRows=parseCsvFull(text,delim).filter(r=>r.some(c=>c.trim()!==''));
+  if(allRows.length<2){showStatus('ヘッダー行とデータ行が必要です。','err');return;}
+
+  const headers=allRows[0].map(h=>h.trim());
+  const findCol=(...keys)=>{
+    for(const k of keys){ const i=headers.findIndex(h=>h.includes(k)); if(i>=0)return i; }
+    return -1;
+  };
+
+  const iName    =findCol('お名前','氏名','名前','name');
+  const iKana    =findCol('フリガナ','ふりがな','よみ','カナ','kana');
+  const iCompany =findCol('所属','会社','company');
+  const iIndustry=findCol('業種','industry');
+  const iType    =findCol('会員種別','種別','区分','type');
+  const iEmail   =findCol('メール','email','mail');
+
+  if(iName<0||iType<0){
+    showStatus(`「お名前」または「会員種別」列が見つかりません。検出した列: ${headers.filter(h=>h).join(' / ')}`,'err');
+    return;
+  }
+
+  const attendees=[];
+  for(let i=1;i<allRows.length;i++){
+    const cols=allRows[i];
+    if(!cols[iName]||!cols[iName].trim())continue;
+    attendees.push({
+      name:cols[iName].trim(),
+      kana:iKana>=0?(cols[iKana]||'').trim():'',
+      company:iCompany>=0?(cols[iCompany]||'').trim():'',
+      industry:iIndustry>=0?(cols[iIndustry]||'').trim():'',
+      type:normalizeType((cols[iType]||'').trim()),
+      email:iEmail>=0?(cols[iEmail]||'').trim():'',
+    });
+  }
+
+  if(attendees.length===0){showStatus('有効なデータが見つかりませんでした。','err');return;}
+
+  const data=loadData();
+  const existing=data[currentMonth]||[];
+  const existingKeys=new Set(existing.map(a=>normName(a.name)+'|'+a.type));
+  const newOnes=attendees.filter(a=>!existingKeys.has(normName(a.name)+'|'+a.type));
+  data[currentMonth]=[...existing,...newOnes];
+  saveData(data);
+
+  const skipped=attendees.length-newOnes.length;
+  showStatus(
+    `${newOnes.length}名をインポートしました（${fmtMonth(currentMonth)}）`+
+    (skipped>0?`。重複 ${skipped}名はスキップ。`:''),
+    'ok'
+  );
+  renderAll();
+}
+
+function normalizeType(raw){
+  if(/ビジター/.test(raw))return 'ビジター';
+  if(/学生/.test(raw))return '学生';
+  if(/支援|行政|金融|大学/.test(raw))return '支援機関';
+  if(/正会員|会員/.test(raw))return '正会員';
+  return raw||'正会員';
+}
+
+function showStatus(msg,cls){
+  const el=document.getElementById('importStatus');
+  el.textContent=msg;el.className=`import-status ${cls}`;el.style.display='block';
+  setTimeout(()=>el.style.display='none',5000);
+}
+
+// ---- STATUS ----
+const STATUS_OPTIONS=[
+  {val:'',        label:'─'},
+  {val:'paypay',  label:'PAYPAY決済済'},
+  {val:'cash',    label:'現金決済済'},
+  {val:'free',    label:'無料'},
+  {val:'invoice', label:'後日請求'},
+];
+function statusKey(ym,name){ return `${ym}:${normName(name)}`; }
+function getStatus(ym,name){ return loadStatuses()[statusKey(ym,name)]||''; }
+function setStatus(ym,name,val){ const s=loadStatuses(); s[statusKey(ym,name)]=val; saveStatuses(s); }
+function statusClass(val){ return {paypay:'paypay',cash:'cash',free:'free',invoice:'invoice'}[val]||'unset'; }
+
+// ---- ENTRY SUMMARY ----
+function renderEntrySummary(){
+  const attendees=loadData()[currentMonth]||[];
+  document.getElementById('s_entry').textContent=attendees.filter(a=>!a.manual).length;
+  const actual=attendees.filter(a=>{const st=getStatus(currentMonth,a.name);return st==='paypay'||st==='cash'||st==='free'||st==='invoice';}).length;
+  document.getElementById('s_actual').textContent=actual;
+}
+
+// ---- RENDER ALL ----
+function renderAll(){
+  renderList();
+  renderPaymentSummary();
+  renderEntrySummary();
+  renderAmountSummary();
+  const tab=document.querySelector('.nav-tab.active')?.dataset.tab;
+  if(tab==='visitor') renderVisitor();
+  if(tab==='ranking') renderRanking();
+  if(tab==='graph')   renderGraph();
+  if(tab==='backup')  renderBackupInfo();
+}
+
+// ---- PAYMENT SUMMARY ----
+function renderPaymentSummary(){
+  const attendees=loadData()[currentMonth]||[];
+  const el=document.getElementById('paySummary');
+  if(attendees.length===0){el.style.display='none';return;}
+
+  const counts={paypay:0,cash:0,free:0,invoice:0,'':0};
+  for(const a of attendees){
+    const st=getStatus(currentMonth,a.name);
+    if(st in counts) counts[st]++;
+    else counts['']++;
+  }
+  const confirmed=counts.paypay+counts.cash+counts.free+counts.invoice;
+  const labels={paypay:'PAYPAY決済済',cash:'現金決済済',free:'無料',invoice:'後日請求','':'未確認'};
+
+  let html=`<span class="pay-summary-label">支払い状況</span>`;
+  for(const [val,label] of Object.entries(labels)){
+    if(counts[val]>0) html+=`<span class="pay-chip ${val||'unset'}">${label} ${counts[val]}名</span>`;
+  }
+  html+=`<span class="pay-divider"></span><span class="pay-total">実来場 ${confirmed}名 ／ エントリー ${attendees.length}名</span>`;
+  el.innerHTML=html;
+  el.style.display='flex';
+}
+
+// ---- RENDER LIST ----
+function renderList(){
+  const data=loadData();
+  const attendees=data[currentMonth]||[];
+  const cats=['正会員','ビジター','支援機関','学生'];
+  const clsMap={'正会員':'member','ビジター':'visitor','支援機関':'support','学生':'student'};
+
+  // 重複チェック（月内・全カテゴリ）
+  const nameCount={};
+  for(const a of attendees){ const k=normName(a.name); nameCount[k]=(nameCount[k]||0)+1; }
+
+  const isActual=a=>{const st=getStatus(currentMonth,a.name);return st==='paypay'||st==='cash'||st==='free'||st==='invoice';};
+  ['正会員','ビジター','支援機関','学生'].forEach((type,idx)=>{
+    const ids=['member','visitor','support','student'];
+    const group=attendees.filter(a=>a.type===type);
+    document.getElementById('s_'+ids[idx]).textContent=group.filter(a=>!a.manual).length;
+    document.getElementById('s_'+ids[idx]+'_act').textContent=group.filter(isActual).length;
+  });
+
+  const visitorCounts=calcVisitorCounts(currentMonth);
+  const q=searchQuery.toLowerCase();
+  let totalFiltered=0;
+  const sections={};
+
+  for(const cat of cats){
+    // 50音ソート
+    let allItems=attendees.filter(a=>a.type===cat);
+    allItems.sort((a,b)=>(a.kana||a.name||'').localeCompare(b.kana||b.name||'','ja'));
+    const totalCount=allItems.length;
+    let items=allItems;
+    if(q){
+      items=allItems.filter(a=>
+        a.name.toLowerCase().includes(q)||
+        (a.kana||'').toLowerCase().includes(q)||
+        (a.company||'').toLowerCase().includes(q)
+      );
+    }
+    totalFiltered+=items.length;
+    const cls=clsMap[cat]||'member';
+    const catEsc=esc(cat);
+    sections[cat]=`<div class="section ${cls}" ondragover="handleDragOver(event,this)" ondragleave="handleDragLeave(event,this)" ondrop="dropAttendee(event,'${catEsc}')">
+      <div class="section-header">
+        <div class="section-title">${catEsc}</div>
+        <div class="section-count">${totalCount}名</div>
+        <div class="btn-row">
+          <button class="btn btn-s" style="font-size:.72rem;padding:4px 10px" onclick="toggleAddForm('${catEsc}')">＋ 手動追加</button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>出欠</th><th style="text-align:right">金額</th><th>氏名</th><th>フリガナ</th><th>所属</th>
+            ${cat==='ビジター'?'<th>来場</th>':''}
+            <th></th>
+          </tr></thead>
+          <tbody>
+            ${items.length===0
+              ?`<tr><td colspan="9" class="empty-state">${q?'該当なし':'データなし'}</td></tr>`
+              :items.map((a,i)=>{
+                const st=getStatus(currentMonth,a.name);
+                const rawNn=normName(a.name);
+                const nn=esc(rawNn);
+                const isDup=nameCount[rawNn]>1;
+                const isEditing=editingKey===rawNn+'|'+cat;
+                // 学生会員 or 学生カテゴリ → 「無料」のみ / それ以外 → PAYPAY・現金・後日請求
+                const isStudentRow=cat==='学生'||isStudentMember(rawNn);
+                const filteredOpts=STATUS_OPTIONS.filter(o=>
+                  isStudentRow ? (o.val===''||o.val==='free') : (o.val!=='free')
+                );
+                const opts=filteredOpts.map(o=>`<option value="${o.val}"${st===o.val?' selected':''}>${o.label}</option>`).join('');
+                const vc=cat==='ビジター'?(visitorCounts[rawNn]||1):0;
+                const vcBadge=cat==='ビジター'
+                  ?`<td><span class="visit-badge ${vc===1?'v1':vc===2?'v2':'v3'}">${vc}回目</span></td>`:'';
+                const rowCls=(isEditing?'editing-row':isDup?'dup-row':'');
+                const fee=feeForAttendee(a,visitorCounts);
+                const isFree=st==='free';
+                const overridden=isOverridden(currentMonth,rawNn);
+                const feeCls='fee-cell'+(overridden&&!isFree?' overridden':'');
+                const feeTitle=overridden?'個別設定中（ダブルクリックでリセット）':'デフォルト金額（編集可）';
+                const feeCellHtml=`<td><input type="number" class="${feeCls}" value="${fee}" min="0" ${isFree?'disabled':''} title="${feeTitle}" onchange="setPersonFee('${esc(currentMonth)}','${nn}',this.value)" ondblclick="resetPersonFee('${esc(currentMonth)}','${nn}',this)" onclick="this.select()"></td>`;
+                if(isEditing){
+                  return `<tr class="editing-row">
+                    <td class="td-num">${i+1}</td>
+                    <td><select class="status-sel ${statusClass(st)}" onchange="onStatusChange(this,'${esc(currentMonth)}','${nn}')">${opts}</select></td>
+                    ${feeCellHtml}
+                    <td><input class="edit-input" id="ei-name" value="${esc(a.name)}" placeholder="氏名" onkeydown="if(event.key==='Enter')saveEdit('${nn}','${catEsc}');if(event.key==='Escape')cancelEdit()"></td>
+                    <td><input class="edit-input" id="ei-kana" value="${esc(a.kana)}" placeholder="フリガナ" onkeydown="if(event.key==='Enter')saveEdit('${nn}','${catEsc}');if(event.key==='Escape')cancelEdit()"></td>
+                    <td><input class="edit-input" id="ei-company" value="${esc(a.company)}" placeholder="所属" onkeydown="if(event.key==='Enter')saveEdit('${nn}','${catEsc}');if(event.key==='Escape')cancelEdit()"></td>
+                    ${cat==='ビジター'?'<td></td>':''}
+                    <td style="white-space:nowrap">
+                      <button class="btn btn-p" style="font-size:.68rem;padding:2px 8px" onclick="saveEdit('${nn}','${catEsc}')">保存</button>
+                      <button class="btn btn-s" style="font-size:.68rem;padding:2px 8px;margin-left:4px" onclick="cancelEdit()">取消</button>
+                    </td>
+                  </tr>`;
+                }
+                return `<tr class="${rowCls}" draggable="true" title="ドラッグで種別変更" ondragstart="startDrag(event,'${esc(currentMonth)}','${nn}','${catEsc}')" ondragend="endDrag()">
+                  <td class="td-num">${i+1}</td>
+                  <td><select class="status-sel ${statusClass(st)}" onchange="onStatusChange(this,'${esc(currentMonth)}','${nn}')">${opts}</select></td>
+                  ${feeCellHtml}
+                  <td class="td-name">${esc(a.name)}${isDup?'<span class="dup-badge" title="同月に同名が存在します">⚠ 重複</span>':''}</td>
+                  <td class="td-kana">${esc(a.kana)}</td>
+                  <td class="td-company" title="${esc(a.company)}">${esc(a.company)}</td>
+                  ${vcBadge}
+                  <td>
+                    <div class="row-menu-wrap">
+                      <button class="row-menu-btn" onclick="toggleRowMenu('rm-${nn}-${catEsc}',event)">•••</button>
+                      <div class="row-menu-dd" id="rm-${nn}-${catEsc}">
+                        <button class="row-menu-item" onclick="startEdit('${nn}','${catEsc}')">編集</button>
+                        <button class="row-menu-item danger" onclick="removeAttendee('${esc(currentMonth)}','${nn}','${catEsc}')">削除</button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>`;
+              }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="manual-form" id="form-${cat}">
+        <div class="mf-field"><div class="mf-label">氏名 <span style="color:var(--danger)">*</span></div><input class="mf-input" id="mf-name-${cat}" placeholder="田中 太郎" style="width:120px" onkeydown="if(event.key==='Enter')addManual('${cat}')"></div>
+        <div class="mf-field"><div class="mf-label">フリガナ</div><input class="mf-input" id="mf-kana-${cat}" placeholder="タナカタロウ" style="width:120px" onkeydown="if(event.key==='Enter')addManual('${cat}')"></div>
+        <div class="mf-field"><div class="mf-label">所属</div><input class="mf-input" id="mf-company-${cat}" placeholder="株式会社〇〇" style="width:150px" onkeydown="if(event.key==='Enter')addManual('${cat}')"></div>
+        <div class="mf-field"><div class="mf-label">業種</div><input class="mf-input" id="mf-industry-${cat}" placeholder="IT" style="width:100px" onkeydown="if(event.key==='Enter')addManual('${cat}')"></div>
+        <button class="btn btn-p" onclick="addManual('${cat}')">追加</button>
+        <button class="btn btn-s" onclick="toggleAddForm('${cat}')">閉じる</button>
+      </div>
+    </div>`;
+  }
+
+  let html;
+  if(attendees.length===0){
+    html='<div class="section"><div class="empty-state">CSVをインポートするか、各カテゴリの「＋ 手動追加」で登録してください</div></div>';
+  }else{
+    html=`<div class="list-grid">
+      <div class="list-col">${sections['正会員']||''}</div>
+      <div class="list-col">${sections['ビジター']||''}</div>
+      <div class="list-col">${sections['支援機関']||''}${sections['学生']||''}</div>
+    </div>`;
+  }
+
+  document.getElementById('searchResult').textContent=q?`${totalFiltered}件ヒット`:'';
+  document.getElementById('listArea').innerHTML=html;
+}
+
+function onStatusChange(sel,ym,normname){
+  const val=sel.value;
+  setStatus(ym,normname,val);
+  sel.className=`status-sel ${statusClass(val)}`;
+  renderPaymentSummary();
+  renderEntrySummary();
+  renderAmountSummary();
+}
+
+function removeAttendee(ym,normname,type){
+  if(!confirm(`${normname} を削除しますか？`))return;
+  const data=loadData();
+  data[ym]=(data[ym]||[]).filter(a=>!(normName(a.name)===normname&&a.type===type));
+  saveData(data);
+  renderAll();
+  showToast('削除しました');
+}
+
+function toggleAddForm(cat){
+  const el=document.getElementById('form-'+cat);
+  const wasOpen=el.classList.contains('open');
+  document.querySelectorAll('.manual-form').forEach(f=>f.classList.remove('open'));
+  if(!wasOpen){
+    el.classList.add('open');
+    setTimeout(()=>document.getElementById('mf-name-'+cat)?.focus(),50);
+  }
+}
+
+function addManual(cat){
+  const name=document.getElementById('mf-name-'+cat).value.trim();
+  const kana=document.getElementById('mf-kana-'+cat).value.trim();
+  const company=document.getElementById('mf-company-'+cat).value.trim();
+  const industry=document.getElementById('mf-industry-'+cat).value.trim();
+  if(!name){showToast('氏名を入力してください');return;}
+  const data=loadData();
+  const list=data[currentMonth]||[];
+  if(list.some(a=>normName(a.name)===normName(name)&&a.type===cat)){
+    showToast('同じ名前がすでに登録されています');return;
+  }
+  list.push({name,kana,company,industry,type:cat,email:'',manual:true});
+  data[currentMonth]=list;
+  saveData(data);
+  ['mf-name-','mf-kana-','mf-company-','mf-industry-'].forEach(p=>{
+    const el=document.getElementById(p+cat);if(el)el.value='';
+  });
+  renderAll();
+  setTimeout(()=>{
+    const f=document.getElementById('form-'+cat);
+    if(f){f.classList.add('open');document.getElementById('mf-name-'+cat)?.focus();}
+  },50);
+  showToast(`${name} を追加しました（${cat}）`);
+}
+
+// ---- FEE SETTINGS ----
+const FEES_KEY      = 'meeting_fees_v1';
+const PFEES_KEY     = 'meeting_person_fees_v1';
+const DEFAULT_FEES  = {member:4000,v1:4000,v2:4000,v3plus:10000,support:4000,student:0};
+
+function loadFees(ym){
+  try{
+    const raw=JSON.parse(localStorage.getItem(FEES_KEY)||'{}');
+    // 旧フォーマット互換：トップレベルに member キーがあれば全月共通として扱う
+    if(raw.member!==undefined) return {...DEFAULT_FEES,...raw};
+    if(ym&&raw[ym]) return {...DEFAULT_FEES,...raw[ym]};
+    return {...DEFAULT_FEES};
+  }catch{ return {...DEFAULT_FEES}; }
+}
+function saveFees(ym,f){
+  try{
+    const raw=JSON.parse(localStorage.getItem(FEES_KEY)||'{}');
+    // 旧フォーマットを新フォーマットへ移行
+    const data=(raw.member!==undefined)?{}:raw;
+    data[ym]=f;
+    localStorage.setItem(FEES_KEY,JSON.stringify(data));
+  }catch{}
+}
+
+function loadPersonFees(){ try{ return JSON.parse(localStorage.getItem(PFEES_KEY)||'{}'); }catch{ return {}; } }
+function savePersonFees(d){ localStorage.setItem(PFEES_KEY,JSON.stringify(d)); }
+function getPersonFee(ym,normname){ const d=loadPersonFees(); const v=d[ym+':'+normname]; return v!==undefined?v:null; }
+function setPersonFee(ym,normname,val){
+  const amount=parseInt(val);
+  if(isNaN(amount)||amount<0) return;
+  const d=loadPersonFees();
+  d[ym+':'+normname]=amount;
+  savePersonFees(d);
+  renderAmountSummary();
+}
+
+function defaultFeeForAttendee(a,visitorCounts){
+  const f=loadFees(currentMonth);
+  if(a.type==='正会員') return f.member;
+  if(a.type==='支援機関') return f.support;
+  if(a.type==='学生') return f.student;
+  if(a.type==='ビジター'){
+    const vc=visitorCounts[normName(a.name)]||1;
+    if(vc===1) return f.v1;
+    if(vc===2) return f.v2;
+    return f.v3plus;
+  }
+  return 0;
+}
+
+function getMasterMember(normname){
+  return loadMasters().find(m=>normName(m.name)===normname)||null;
+}
+function isStudentMember(normname){
+  const m=getMasterMember(normname);
+  return m ? /学生/.test(m.memberType) : false;
+}
+
+function feeForAttendee(a,visitorCounts){
+  const st=getStatus(currentMonth,a.name);
+  if(st==='free') return 0;
+  // マスタで学生会員の場合は常に0円
+  if(isStudentMember(normName(a.name))) return 0;
+  const override=getPersonFee(currentMonth,normName(a.name));
+  return override!==null ? override : defaultFeeForAttendee(a,visitorCounts);
+}
+
+function isOverridden(ym,normname){ return getPersonFee(ym,normname)!==null; }
+function resetPersonFee(ym,normname,input){
+  const d=loadPersonFees();
+  delete d[ym+':'+normname];
+  savePersonFees(d);
+  // 表示をデフォルト値に戻す
+  renderList();
+  renderAmountSummary();
+  showToast('デフォルト金額に戻しました');
+}
+
+function renderAmountSummary(){
+  const el=document.getElementById('amountBar');
+  const attendees=loadData()[currentMonth]||[];
+  if(!el||attendees.length===0){if(el)el.style.display='none';return;}
+  const vc=calcVisitorCounts(currentMonth);
+  let confirmed=0,invoice=0;
+  for(const a of attendees){
+    const st=getStatus(currentMonth,a.name);
+    const fee=feeForAttendee(a,vc);
+    if(st==='paypay'||st==='cash') confirmed+=fee;
+    else if(st==='invoice') invoice+=fee;
+  }
+  const fmt=n=>'¥'+n.toLocaleString('ja-JP');
+  el.innerHTML=`
+    <div class="amount-item"><div class="amount-item-label">確認済み</div><div class="amount-item-val ok">${fmt(confirmed)}</div></div>
+    <span style="color:var(--border2)">|</span>
+    <div class="amount-item"><div class="amount-item-label">後日請求</div><div class="amount-item-val pending">${fmt(invoice)}</div></div>
+    <span style="color:var(--border2)">|</span>
+    <div class="amount-item"><div class="amount-item-label">合計見込み</div><div class="amount-item-val total">${fmt(confirmed+invoice)}</div></div>
+    <button class="btn btn-s" style="font-size:.7rem;padding:3px 10px;margin-left:auto" onclick="toggleFeeSettings()">⚙ 金額設定</button>
+  `;
+  el.style.display='flex';
+}
+
+function toggleFeeSettings(){
+  const panel=document.getElementById('feePanel');
+  if(!panel.classList.contains('open')){
+    const f=loadFees(currentMonth);
+    document.getElementById('fee-member').value=f.member;
+    document.getElementById('fee-v1').value=f.v1;
+    document.getElementById('fee-v2').value=f.v2;
+    document.getElementById('fee-v3plus').value=f.v3plus;
+    document.getElementById('fee-support').value=f.support;
+    document.getElementById('fee-student').value=f.student;
+    // タイトルに対象月を表示
+    const titleEl=document.getElementById('feePanelTitle');
+    if(titleEl) titleEl.textContent=`⚙ 参加費設定（${fmtMonth(currentMonth)}）`;
+  }
+  panel.classList.toggle('open');
+}
+
+function saveFeeSettings(){
+  saveFees(currentMonth,{
+    member:  parseInt(document.getElementById('fee-member').value)||0,
+    v1:      parseInt(document.getElementById('fee-v1').value)||0,
+    v2:      parseInt(document.getElementById('fee-v2').value)||0,
+    v3plus:  parseInt(document.getElementById('fee-v3plus').value)||0,
+    support: parseInt(document.getElementById('fee-support').value)||0,
+    student: parseInt(document.getElementById('fee-student').value)||0,
+  });
+  document.getElementById('feePanel').classList.remove('open');
+  renderAmountSummary();
+  showToast(`${fmtMonth(currentMonth)}の金額設定を保存しました`);
+}
+
+// ---- INLINE EDIT ----
+let editingKey=null;
+
+function startEdit(normname,type){
+  editingKey=normname+'|'+type;
+  renderList();
+  setTimeout(()=>document.getElementById('ei-name')?.focus(),50);
+}
+function cancelEdit(){
+  editingKey=null;
+  renderList();
+}
+function saveEdit(normname,type){
+  const newName=(document.getElementById('ei-name')?.value||'').trim();
+  const newKana=(document.getElementById('ei-kana')?.value||'').trim();
+  const newCompany=(document.getElementById('ei-company')?.value||'').trim();
+  if(!newName){showToast('氏名を入力してください');return;}
+
+  const data=loadData();
+  const list=data[currentMonth]||[];
+  const idx=list.findIndex(a=>normName(a.name)===normname&&a.type===type);
+  if(idx<0){editingKey=null;renderList();return;}
+
+  const newNorm=normName(newName);
+  // 名前が変わった場合、別人との重複チェック
+  if(newNorm!==normname&&list.some((a,i)=>i!==idx&&normName(a.name)===newNorm)){
+    showToast('その氏名はすでに登録されています');return;
+  }
+  // ステータスキーを移行
+  if(newNorm!==normname){
+    const s=loadStatuses();
+    const oldKey=statusKey(currentMonth,normname);
+    const newKey=statusKey(currentMonth,newNorm);
+    if(s[oldKey]!==undefined){s[newKey]=s[oldKey];delete s[oldKey];saveStatuses(s);}
+  }
+  list[idx]={...list[idx],name:newName,kana:newKana,company:newCompany};
+  data[currentMonth]=list;
+  saveData(data);
+  editingKey=null;
+  renderAll();
+  showToast(`${newName} を更新しました`);
+}
+
+// ---- DRAG & DROP ----
+let dragData=null;
+
+function startDrag(e,ym,normname,fromType){
+  dragData={ym,normname,fromType};
+  e.dataTransfer.effectAllowed='move';
+}
+function endDrag(){
+  document.querySelectorAll('.section.drag-over').forEach(s=>s.classList.remove('drag-over'));
+  dragData=null;
+}
+function handleDragOver(e,el){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  el.classList.add('drag-over');
+}
+function handleDragLeave(e,el){
+  if(e.relatedTarget&&el.contains(e.relatedTarget))return;
+  el.classList.remove('drag-over');
+}
+function dropAttendee(e,toType){
+  e.preventDefault();
+  document.querySelectorAll('.section.drag-over').forEach(s=>s.classList.remove('drag-over'));
+  if(!dragData)return;
+  const{ym,normname,fromType}=dragData;
+  dragData=null;
+  if(fromType===toType)return;
+  const data=loadData();
+  const list=data[ym]||[];
+  const idx=list.findIndex(a=>normName(a.name)===normname&&a.type===fromType);
+  if(idx<0)return;
+  list[idx]={...list[idx],type:toType};
+  saveData(data);
+  renderAll();
+  showToast(`${normname} を「${toType}」に移動しました`);
+}
+
+// ---- VISITOR PASTE REGISTER ----
+function registerVisitorPaste(){
+  const raw=document.getElementById('vcPasteInput').value;
+  const lines=raw.split(/\r?\n/).map(l=>l.trim()).filter(l=>l);
+  if(lines.length===0){showToast('名前を入力してください');return;}
+
+  const data=loadData();
+  const existing=data[currentMonth]||[];
+  const existingKeys=new Set(existing.map(a=>normName(a.name)+'|'+a.type));
+
+  const added=[];
+  for(const line of lines){
+    // タブ・カンマ区切りの場合は最初の列を名前として使用
+    const cols=line.split(/[\t,]/);
+    const rawName=(cols[0]||'').trim();
+    if(!rawName)continue;
+    // 既存データに同名ビジターがあればそちらの表記を優先（スペースありなし統一）
+    const normN=normName(rawName);
+    const existingEntry=existing.find(a=>normName(a.name)===normN&&a.type==='ビジター');
+    const finalName=existingEntry?existingEntry.name:rawName;
+    if(!existingKeys.has(normN+'|ビジター')){
+      added.push({name:finalName,kana:'',company:'',industry:'',type:'ビジター',email:''});
+      existingKeys.add(normN+'|ビジター');
+    }
+  }
+
+  if(added.length===0){showToast('新規の名前がありません（すでに登録済みです）');return;}
+  data[currentMonth]=[...existing,...added];
+  saveData(data);
+  renderAll();
+  showToast(`${added.length}名をビジターとして登録しました`);
+}
+
+// ---- VISITOR COUNTS ----
+function calcVisitorCounts(upToMonth){
+  const data=loadData();
+  const counts={};
+  for(const ym of ALL_MONTHS){
+    if(ym>upToMonth)break;
+    for(const a of (data[ym]||[])){
+      if(a.type==='ビジター'){
+        const k=normName(a.name);
+        counts[k]=(counts[k]||0)+1;
+      }
+    }
+  }
+  return counts;
+}
+
+function allVisitorInfo(){
+  const data=loadData();
+  const info={};
+  for(const ym of ALL_MONTHS){
+    for(const a of (data[ym]||[])){
+      if(a.type==='ビジター'){
+        const k=normName(a.name);
+        if(!info[k])info[k]={name:a.name,kana:a.kana,company:a.company,count:0,months:[]};
+        info[k].count++;
+        info[k].months.push(ym);
+      }
+    }
+  }
+  return info;
+}
+
+// ---- RENDER VISITOR CHECK ----
+let editingVcKey=null;
+
+function renderVisitor(){
+  const data=loadData();
+  const visitors=(data[currentMonth]||[]).filter(a=>a.type==='ビジター');
+  const counts=calcVisitorCounts(currentMonth);
+  const g1=[],g2=[],g3=[];
+  for(const a of visitors){
+    const c=counts[normName(a.name)]||1;
+    if(c===1)g1.push({...a,c});
+    else if(c===2)g2.push({...a,c});
+    else g3.push({...a,c});
+  }
+  document.getElementById('vc_cnt1').textContent=g1.length;
+  document.getElementById('vc_cnt2').textContent=g2.length;
+  document.getElementById('vc_cnt3').textContent=g3.length;
+
+  function chipHtml(a){
+    const nn=esc(normName(a.name));
+    const isEditing=editingVcKey===normName(a.name);
+    if(isEditing){
+      return `<div class="vc-chip editing-row" style="flex-direction:column;align-items:stretch;gap:6px">
+        <input class="edit-input" id="vce-name" value="${esc(a.name)}" placeholder="氏名" onkeydown="if(event.key==='Enter')saveVcEdit('${nn}');if(event.key==='Escape')cancelVcEdit()">
+        <input class="edit-input" id="vce-company" value="${esc(a.company)}" placeholder="所属" onkeydown="if(event.key==='Enter')saveVcEdit('${nn}');if(event.key==='Escape')cancelVcEdit()">
+        <div style="display:flex;gap:6px;margin-top:2px">
+          <button class="btn btn-p" style="font-size:.65rem;padding:2px 8px" onclick="saveVcEdit('${nn}')">保存</button>
+          <button class="btn btn-s" style="font-size:.65rem;padding:2px 8px" onclick="cancelVcEdit()">取消</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="vc-chip">
+      <div style="flex:1;min-width:0"><div>${esc(a.name)}</div><div class="company">${esc(a.company)}</div></div>
+      <span class="visit-badge ${a.c===1?'v1':a.c===2?'v2':'v3'}">${a.c}回目</span>
+      <div class="row-menu-wrap">
+        <button class="row-menu-btn" onclick="toggleRowMenu('vcm-${nn}',event)">•••</button>
+        <div class="row-menu-dd" id="vcm-${nn}">
+          <button class="row-menu-item" onclick="startVcEdit('${nn}')">編集</button>
+          <button class="row-menu-item danger" onclick="deleteVcVisitor('${nn}')">削除</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function colHtml(cls,label,items){
+    const chips=items.map(chipHtml).join('')||
+      '<div style="padding:16px;text-align:center;color:var(--muted);font-size:.78rem">いません</div>';
+    return `<div class="vc-col ${cls}">
+      <div class="vc-head"><span class="vc-dot"></span>${label}</div>
+      <div class="vc-body">${chips}</div>
+    </div>`;
+  }
+  document.getElementById('vcGrid').innerHTML=
+    colHtml('vc1','1回目（今月が初来場）',g1)+
+    colHtml('vc2','2回目',g2)+
+    colHtml('vc3','3回以上',g3);
+}
+
+function startVcEdit(normname){
+  editingVcKey=normname;
+  renderVisitor();
+  setTimeout(()=>document.getElementById('vce-name')?.focus(),50);
+}
+function cancelVcEdit(){editingVcKey=null;renderVisitor();}
+function saveVcEdit(normname){
+  const newName=(document.getElementById('vce-name')?.value||'').trim();
+  const newCompany=(document.getElementById('vce-company')?.value||'').trim();
+  if(!newName){showToast('氏名を入力してください');return;}
+  const data=loadData();
+  const list=data[currentMonth]||[];
+  const idx=list.findIndex(a=>normName(a.name)===normname&&a.type==='ビジター');
+  if(idx<0){editingVcKey=null;renderVisitor();return;}
+  const newNorm=normName(newName);
+  if(newNorm!==normname&&list.some((a,i)=>i!==idx&&normName(a.name)===newNorm)){
+    showToast('その氏名はすでに登録されています');return;
+  }
+  if(newNorm!==normname){
+    const s=loadStatuses();
+    const ok=statusKey(currentMonth,normname);
+    const nk=statusKey(currentMonth,newNorm);
+    if(s[ok]!==undefined){s[nk]=s[ok];delete s[ok];saveStatuses(s);}
+  }
+  list[idx]={...list[idx],name:newName,company:newCompany};
+  data[currentMonth]=list;
+  saveData(data);
+  editingVcKey=null;
+  renderAll();
+  showToast(`${newName} を更新しました`);
+}
+function deleteVcVisitor(normname){
+  const data=loadData();
+  const list=data[currentMonth]||[];
+  const target=list.find(a=>normName(a.name)===normname&&a.type==='ビジター');
+  if(!target||!confirm(`${target.name} を削除しますか？`))return;
+  data[currentMonth]=list.filter(a=>!(normName(a.name)===normname&&a.type==='ビジター'));
+  saveData(data);
+  renderAll();
+  showToast('削除しました');
+}
+
+// ---- MASTER MEMBER LIST ----
+const MEMBERS_KEY = 'meeting_members_v1';
+function loadMasters(){ try{ return JSON.parse(localStorage.getItem(MEMBERS_KEY)||'[]'); }catch{ return []; } }
+function saveMasters(d){ localStorage.setItem(MEMBERS_KEY, JSON.stringify(d)); }
+
+function updateMasterCount(){
+  const m = loadMasters();
+  const el = document.getElementById('masterCount');
+  if(el) el.textContent = m.length > 0 ? `${m.length}名登録済み` : '未登録（登録するとランキングに全員表示）';
+}
+
+function importMasterCSV(input){
+  const file = input.files[0];
+  if(!file) return;
+  input.value = '';
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = decodeBuffer(e.target.result);
+    parseMasterCSV(text.replace(/^﻿/,''));
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseMasterCSV(text){
+  if(!text.trim()){ showToast('データがありません'); return; }
+  const firstLine = text.split(/\r?\n/)[0];
+  const delim = firstLine.includes('\t') ? '\t' : ',';
+  const allRows = parseCsvFull(text, delim).filter(r => r.some(c => c.trim() !== ''));
+  if(allRows.length < 2){ showToast('ヘッダーとデータが必要です'); return; }
+
+  const headers = allRows[0].map(h => h.trim());
+  const fc = (...keys) => { for(const k of keys){ const i=headers.findIndex(h=>h.includes(k)); if(i>=0)return i; } return -1; };
+
+  const iName  = fc('氏名','名前');
+  const iKana  = fc('よみ','フリガナ','ふりがな');
+  const iCo    = fc('会社','所属');
+  const iType  = fc('会員区分','種別');
+  const iJoin  = fc('入会年月');
+
+  if(iName < 0){ showToast('「氏名」列が見つかりません'); return; }
+
+  const members = [];
+  for(let i = 1; i < allRows.length; i++){
+    const c = allRows[i];
+    const name = (c[iName]||'').trim();
+    if(!name) continue;
+    members.push({
+      name,
+      kana:       iKana >= 0 ? (c[iKana]||'').trim() : '',
+      company:    iCo   >= 0 ? (c[iCo]  ||'').trim() : '',
+      memberType: iType >= 0 ? (c[iType] ||'').trim() : '',
+      joinDate:   iJoin >= 0 ? (c[iJoin] ||'').trim() : '',
+    });
+  }
+  if(members.length === 0){ showToast('有効なデータがありません'); return; }
+  saveMasters(members);
+  updateMasterCount();
+  renderRanking();
+  showToast(`${members.length}名の会員マスタをインポートしました`);
+}
+
+function clearMasterList(){
+  if(!confirm('全会員マスタをクリアしますか？')) return;
+  localStorage.removeItem(MEMBERS_KEY);
+  updateMasterCount();
+  renderRanking();
+  showToast('会員マスタをクリアしました');
+}
+
+function toggleMasterAddForm(){
+  const f=document.getElementById('masterAddForm');
+  const wasOpen=f.classList.contains('open');
+  f.classList.toggle('open',!wasOpen);
+  if(!wasOpen) setTimeout(()=>document.getElementById('ma-name')?.focus(),50);
+}
+
+function addMasterMember(){
+  const name=document.getElementById('ma-name').value.trim();
+  const kana=document.getElementById('ma-kana').value.trim();
+  const company=document.getElementById('ma-company').value.trim();
+  const memberType=document.getElementById('ma-type').value.trim();
+  if(!name){showToast('氏名を入力してください');return;}
+  const members=loadMasters();
+  if(members.some(m=>normName(m.name)===normName(name))){showToast('同じ名前がすでに登録されています');return;}
+  members.push({name,kana,company,memberType,joinDate:''});
+  saveMasters(members);
+  ['ma-name','ma-kana','ma-company','ma-type'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  updateMasterCount();
+  renderRanking();
+  setTimeout(()=>{
+    document.getElementById('masterAddForm').classList.add('open');
+    document.getElementById('ma-name')?.focus();
+  },50);
+  showToast(`${name} を追加しました`);
+}
+
+let editingMasterKey=null;
+function startEditMaster(nn){
+  editingMasterKey=nn;
+  renderRanking();
+  setTimeout(()=>document.getElementById('em-name')?.focus(),50);
+}
+function cancelEditMaster(){editingMasterKey=null;renderRanking();}
+function saveEditMaster(nn){
+  const newName=(document.getElementById('em-name')?.value||'').trim();
+  const newCompany=(document.getElementById('em-company')?.value||'').trim();
+  const newType=(document.getElementById('em-type')?.value||'').trim();
+  if(!newName){showToast('氏名を入力してください');return;}
+  const members=loadMasters();
+  const idx=members.findIndex(m=>normName(m.name)===nn);
+  if(idx<0){editingMasterKey=null;renderRanking();return;}
+  const newNn=normName(newName);
+  if(newNn!==nn&&members.some((m,i)=>i!==idx&&normName(m.name)===newNn)){showToast('その氏名はすでに登録されています');return;}
+  members[idx]={...members[idx],name:newName,company:newCompany,memberType:newType};
+  saveMasters(members);
+  editingMasterKey=null;
+  updateMasterCount();
+  renderRanking();
+  showToast(`${newName} を更新しました`);
+}
+function deleteMasterMember(nn){
+  const members=loadMasters();
+  const m=members.find(m=>normName(m.name)===nn);
+  if(!m||!confirm(`${m.name} をマスタから削除しますか？`))return;
+  saveMasters(members.filter(m=>normName(m.name)!==nn));
+  updateMasterCount();
+  renderRanking();
+  showToast('削除しました');
+}
+
+// ---- RENDER RANKING ----
+
+// 当該年度の経過月数（4月=1, 5月=2 … 3月=12）
+function fyElapsedMonths(fy){
+  const now=new Date();
+  const curY=now.getFullYear(), curM=now.getMonth()+1;
+  const curFY=curM>=4?curY:curY-1;
+  if(fy>curFY) return 0;
+  if(fy<curFY) return 12;
+  return curM>=4 ? curM-3 : curM+9;
+}
+
+function getFiscalYear(ym){
+  const [y,m]=ym.split('-').map(Number);
+  return m>=4?y:y-1;
+}
+
+function memberRankingData(){
+  const data=loadData();
+  const masters=loadMasters();
+  const fySet=new Set();
+
+  // 月別データから実来場マップを作成（normName → {fy:{}, total, name, kana}）
+  const attMap={};
+  for(const ym of ALL_MONTHS){
+    const fy=getFiscalYear(ym);
+    for(const a of (data[ym]||[])){
+      if(a.type==='ビジター') continue; // ビジターは除外
+      const k=normName(a.name);
+      const st=getStatus(ym,a.name);
+      const studentMember=isStudentMember(k);
+      // 通常会員：PayPay/現金のみ　学生会員：無料もカウント
+      const counted=(st==='paypay'||st==='cash')||(studentMember&&st==='free');
+      if(!counted) continue;
+      // マスタ登録済みの場合、マスタにない人はスキップ
+      if(masters.length>0&&!getMasterMember(k)) continue;
+      if(!attMap[k]) attMap[k]={name:a.name,kana:a.kana,fy:{},total:0};
+      attMap[k].fy[fy]=(attMap[k].fy[fy]||0)+1;
+      attMap[k].total++;
+      fySet.add(fy);
+    }
+  }
+  // attMapの年度もfySetに追加
+  Object.values(attMap).forEach(v=>Object.keys(v.fy).forEach(fy=>fySet.add(parseInt(fy))));
+
+  let entries;
+  if(masters.length>0){
+    // マスタ全員を表示（参加0回含む）
+    entries=masters.map(m=>{
+      const k=normName(m.name);
+      const att=attMap[k]||{fy:{},total:0};
+      return{
+        name:m.name,
+        kana:m.kana||att.kana||'',
+        company:m.company||'',
+        memberType:m.memberType,
+        fy:att.fy,
+        total:att.total,
+      };
+    });
+  }else{
+    // マスタ未登録 → 実来場者のみ表示
+    entries=Object.values(attMap).map(v=>({...v,company:'',memberType:''}));
+  }
+
+  // 合計降順→名前昇順でソート
+  entries.sort((a,b)=>b.total-a.total||(a.kana||a.name).localeCompare(b.kana||b.name,'ja'));
+  return{entries,fiscalYears:[...fySet].sort((a,b)=>a-b)};
+}
+
+function renderRanking(){
+  updateMasterCount();
+  const{entries,fiscalYears}=memberRankingData();
+  const hasMaster=loadMasters().length>0;
+
+  const empty=document.getElementById('rankEmpty');
+  empty.style.display=entries.length===0?'block':'none';
+
+  const typeCol  = hasMaster ? '<th style="white-space:nowrap">会員区分</th>' : '';
+  const joinCol  = hasMaster ? '<th style="white-space:nowrap;color:var(--muted)">入会年月</th>' : '';
+  const editCol  = hasMaster ? '<th></th>' : '';
+  document.getElementById('rankThead').innerHTML=`<tr>
+    <th>#</th>${typeCol}<th>氏名</th><th>会社名</th>${joinCol}
+    ${fiscalYears.map(fy=>{
+      const el=fyElapsedMonths(fy);
+      return `<th style="text-align:center;white-space:nowrap">${fy}年度</th>`+
+             `<th style="text-align:center;white-space:nowrap;color:var(--accent)">参加率<div style="font-size:.6rem;font-weight:400;color:var(--muted)">/${el}回</div></th>`;
+    }).join('')}
+    <th style="text-align:center;white-space:nowrap">合計</th>${editCol}
+  </tr>`;
+
+  document.getElementById('rankTbody').innerHTML=entries.map((e,i)=>{
+    const attended=e.total>0;
+    const nn=esc(normName(e.name));
+    const isEditing=editingMasterKey===normName(e.name);
+    const rc=attended?(i===0?'rank-gold':i===1?'rank-silver':i===2?'rank-bronze':'rank-num'):'rank-num';
+    const fyCells=fiscalYears.map(fy=>{
+      const cnt=e.fy[fy]||0;
+      const el=fyElapsedMonths(fy);
+      const pct=el>0?Math.round(cnt/el*100):0;
+      const pctColor=pct>=80?'var(--support-text)':pct>=50?'var(--warning)':'var(--danger)';
+      const cntCell=`<td style="text-align:center;font-size:.82rem;font-weight:${cnt?'700':'400'};color:${cnt?'var(--text)':'var(--muted)'}">${cnt||'─'}</td>`;
+      const rateCell=`<td style="text-align:center;font-size:.82rem;font-weight:700;color:${el>0&&cnt?pctColor:'var(--muted)'}">
+        ${el>0?(cnt?`${pct}%<div style="font-size:.65rem;font-weight:400;color:var(--muted)">${cnt}/${el}</div>`:'0%'):'─'}
+      </td>`;
+      return cntCell+rateCell;
+    }).join('');
+    const badge=e.total>=10?'v3':e.total>=5?'v2':'v1';
+    const totalCell=attended
+      ?`<td style="text-align:center"><span class="visit-badge ${badge}">${e.total}回</span></td>`
+      :`<td style="text-align:center;color:var(--muted);font-size:.78rem">─</td>`;
+
+    if(isEditing){
+      const typeInput=hasMaster?`<td><input class="edit-input" id="em-type" value="${esc(e.memberType)}" style="width:90px"></td>`:'';
+      const editBtns=hasMaster?`<td style="white-space:nowrap">
+        <button class="btn btn-p" style="font-size:.65rem;padding:2px 7px" onclick="saveEditMaster('${nn}')">保存</button>
+        <button class="btn btn-s" style="font-size:.65rem;padding:2px 7px" onclick="cancelEditMaster()">取消</button>
+      </td>`:'';
+      return `<tr class="editing-row">
+        <td class="${rc}">${attended?i+1:'─'}</td>
+        ${typeInput}
+        <td><input class="edit-input" id="em-name" value="${esc(e.name)}" style="width:100px"></td>
+        <td><input class="edit-input" id="em-company" value="${esc(e.company||'')}" style="width:130px"></td>
+        ${fyCells}${totalCell}${editBtns}
+      </tr>`;
+    }
+
+    const typeCell=hasMaster?`<td style="font-size:.72rem;color:var(--muted);white-space:nowrap">${esc(e.memberType)}</td>`:'';
+    const joinCell=hasMaster?`<td style="font-size:.72rem;color:var(--muted);white-space:nowrap">${esc(e.joinDate||'')}</td>`:'';
+    const editBtns=hasMaster?`<td>
+      <div class="row-menu-wrap">
+        <button class="row-menu-btn" onclick="toggleRowMenu('rm-m-${nn}',event)">•••</button>
+        <div class="row-menu-dd" id="rm-m-${nn}">
+          <button class="row-menu-item" onclick="startEditMaster('${nn}')">編集</button>
+          <button class="row-menu-item danger" onclick="deleteMasterMember('${nn}')">削除</button>
+        </div>
+      </div>
+    </td>`:'';
+    return `<tr style="${!attended?'opacity:.55':''}">
+      <td class="${rc}">${attended?i+1:'─'}</td>
+      ${typeCell}
+      <td style="font-weight:600;white-space:nowrap">${esc(e.name)}</td>
+      <td style="color:var(--muted);font-size:.78rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(e.company||'')}">${esc(e.company||'')}</td>
+      ${joinCell}
+      ${fyCells}${totalCell}${editBtns}
+    </tr>`;
+  }).join('');
+}
+
+// ---- RENDER GRAPH ----
+function renderGraph(){
+  const data=loadData();
+  const totals=GRAPH_MONTHS.map(ym=>{
+    const list=data[ym]||[];
+    return{
+      member: list.filter(a=>a.type==='正会員').length,
+      visitor:list.filter(a=>a.type==='ビジター').length,
+      support:list.filter(a=>a.type==='支援機関').length,
+      student:list.filter(a=>a.type==='学生').length,
+    };
+  });
+  const maxTotal=Math.max(...totals.map(t=>t.member+t.visitor+t.support+t.student),1);
+  const H=120;
+
+  document.getElementById('graph1').innerHTML=GRAPH_MONTHS.map((ym,i)=>{
+    const t=totals[i];
+    const total=t.member+t.visitor+t.support+t.student;
+    const hM=Math.round(t.member/maxTotal*H);
+    const hV=Math.round(t.visitor/maxTotal*H);
+    const hS=Math.round(t.support/maxTotal*H);
+    const hSt=Math.round(t.student/maxTotal*H);
+    return `<div class="bar-group">
+      <div class="bar-val">${total||''}</div>
+      <div class="bar-stack">
+        ${hSt?`<div class="bar-seg" style="height:${hSt}px;background:#7e22ce"></div>`:''}
+        ${hS ?`<div class="bar-seg" style="height:${hS}px;background:#15803d"></div>`:''}
+        ${hV ?`<div class="bar-seg" style="height:${hV}px;background:#ea580c"></div>`:''}
+        ${hM ?`<div class="bar-seg" style="height:${hM}px;background:#2563eb"></div>`:''}
+      </div>
+      <div class="bar-lbl">${ym.slice(5)}月</div>
+    </div>`;
+  }).join('');
+
+  // Graph2: 会員参加率
+  const mCounts=loadMemberCounts();
+  document.getElementById('graph2').innerHTML=NAV_MONTHS.map(ym=>{
+    const list=data[ym]||[];
+    const attending=list.filter(a=>{
+      if(a.type==='ビジター')return false;
+      const st=getStatus(ym,a.name);
+      return st==='paypay'||st==='cash'||st==='free'||st==='invoice';
+    }).length;
+    const total=mCounts[ym]||0;
+    const rate=total>0?Math.round(attending/total*100):null;
+    const barColor=rate===null?'#d1d5db':rate>=80?'#2563eb':rate>=60?'#ea580c':rate>=40?'#d97706':'#dc2626';
+    const barH=rate!==null?Math.round(rate/100*H):0;
+    return `<div class="bar-group">
+      <div class="bar-val" style="font-size:.65rem">${rate!==null?rate+'%':''}</div>
+      <div class="bar-stack">
+        ${barH?`<div class="bar-seg" style="height:${barH}px;background:${barColor}"></div>`:
+          `<div style="height:4px;background:#e5e7eb;border-radius:2px;width:100%"></div>`}
+      </div>
+      <div class="bar-lbl">${ym.slice(5)}月</div>
+    </div>`;
+  }).join('');
+}
+
+// ---- MEMBER COUNT (参加率グラフ用) ----
+const MC_KEY='meeting_member_counts_v1';
+function loadMemberCounts(){ try{ return JSON.parse(localStorage.getItem(MC_KEY)||'{}'); }catch{ return {}; } }
+function saveMemberCounts(d){ localStorage.setItem(MC_KEY,JSON.stringify(d)); }
+
+function toggleMemberCountPanel(){
+  const panel=document.getElementById('memberCountPanel');
+  const willOpen=panel.style.display==='none';
+  if(willOpen){
+    const counts=loadMemberCounts();
+    const data=loadData();
+    const months=NAV_MONTHS.filter(ym=>(data[ym]||[]).length>0||counts[ym]);
+    const displayMonths=months.length>0?months:NAV_MONTHS.slice(-6);
+    panel.innerHTML=`
+      <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:10px">月ごとの総会員数を入力（参加率の分母）</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:12px">
+        ${displayMonths.map(ym=>`
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:.75rem;font-weight:700;min-width:68px">${fmtMonth(ym)}</span>
+            <input type="number" class="fee-input" id="mc-${ym}" value="${counts[ym]||''}" placeholder="人数" min="0" style="width:70px">
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" onclick="saveAllMemberCounts()">保存</button>
+        <button class="btn btn-s" onclick="toggleMemberCountPanel()">閉じる</button>
+      </div>`;
+  }
+  panel.style.display=willOpen?'block':'none';
+}
+
+function saveAllMemberCounts(){
+  const counts=loadMemberCounts();
+  document.querySelectorAll('[id^="mc-"]').forEach(el=>{
+    const ym=el.id.slice(3);
+    const v=parseInt(el.value);
+    if(!isNaN(v)&&v>0) counts[ym]=v;
+    else delete counts[ym];
+  });
+  saveMemberCounts(counts);
+  document.getElementById('memberCountPanel').style.display='none';
+  renderGraph();
+  showToast('会員数設定を保存しました');
+}
+
+// ---- BACKUP: JSON EXPORT ----
+function exportJSON(){
+  const payload={
+    version:1,
+    exportedAt:new Date().toISOString(),
+    data:loadData(),
+    statuses:loadStatuses(),
+  };
+  const json=JSON.stringify(payload,null,2);
+  const url=URL.createObjectURL(new Blob([json],{type:'application/json;charset=utf-8;'}));
+  const a=document.createElement('a');
+  const ts=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  a.href=url;a.download=`meeting_backup_${ts}.json`;a.click();
+  URL.revokeObjectURL(url);
+  localStorage.setItem(BACKUP_KEY,new Date().toISOString());
+  renderBackupInfo();
+  showToast('バックアップを保存しました');
+}
+
+// ---- BACKUP: JSON IMPORT ----
+function importJSON(input){
+  const file=input.files[0];
+  if(!file)return;
+  input.value='';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const payload=JSON.parse(e.target.result);
+      if(!payload.data||!payload.statuses){showToast('JSONの形式が正しくありません');return;}
+      const monthCount=Object.keys(payload.data).length;
+      if(!confirm(`${monthCount}ヶ月分のデータを復元します。\n現在のデータはすべて上書きされます。よろしいですか？`))return;
+      saveData(payload.data);
+      saveStatuses(payload.statuses);
+      renderAll();
+      showToast(`${monthCount}ヶ月分のデータを復元しました`);
+    }catch{
+      showToast('ファイルの読み込みに失敗しました');
+    }
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+// ---- BACKUP INFO ----
+function renderBackupInfo(){
+  const el=document.getElementById('backupInfo');
+  if(!el)return;
+  const data=loadData();
+  const monthCount=Object.keys(data).length;
+  const totalAttendees=Object.values(data).reduce((s,a)=>s+a.length,0);
+  const lastBackup=localStorage.getItem(BACKUP_KEY);
+  const sizeBytes=(new Blob([localStorage.getItem(DATA_KEY)||'']).size+
+                   new Blob([localStorage.getItem(STATUS_KEY)||'']).size);
+  const sizeKB=(sizeBytes/1024).toFixed(1);
+
+  const fmtDate=iso=>{
+    if(!iso)return '未保存';
+    const d=new Date(iso);
+    return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} `+
+           `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  };
+
+  el.innerHTML=`
+    <div class="backup-info-row"><span class="backup-info-label">登録月数</span><span class="backup-info-val">${monthCount}ヶ月</span></div>
+    <div class="backup-info-row"><span class="backup-info-label">総参加者数</span><span class="backup-info-val">${totalAttendees}名</span></div>
+    <div class="backup-info-row"><span class="backup-info-label">データサイズ</span><span class="backup-info-val">${sizeKB} KB</span></div>
+    <div class="backup-info-row"><span class="backup-info-label">最終バックアップ</span><span class="backup-info-val" style="${lastBackup?'':'color:var(--danger)'}">${fmtDate(lastBackup)}</span></div>
+  `;
+}
+
+// ---- EXPORT CSV ----
+function exportCurrentCSV(){
+  const data=loadData();
+  const list=data[currentMonth]||[];
+  if(list.length===0){showToast('データがありません');return;}
+  const counts=calcVisitorCounts(currentMonth);
+  const rows=[['月','氏名','フリガナ','所属','会員種別','出欠ステータス','来場回数（ビジターのみ）']];
+  for(const a of list){
+    const st=getStatus(currentMonth,a.name);
+    const stLabel=STATUS_OPTIONS.find(o=>o.val===st)?.label||st;
+    const vc=a.type==='ビジター'?(counts[normName(a.name)]||1):'';
+    rows.push([fmtMonth(currentMonth),a.name,a.kana,a.company,a.type,stLabel,vc]);
+  }
+  const csv='﻿'+rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  const a=document.createElement('a');
+  a.href=url;a.download=`月例会_${currentMonth}.csv`;a.click();
+  URL.revokeObjectURL(url);
+}
+
+function confirmDeleteMonth(){
+  if(!confirm(`${fmtMonth(currentMonth)}のデータをすべて削除しますか？`))return;
+  const data=loadData();
+  delete data[currentMonth];
+  saveData(data);
+  renderAll();
+  showToast('削除しました');
+}
+
+// ---- TABS ----
+function switchTab(el){
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-'+el.dataset.tab).classList.add('active');
+  const tab=el.dataset.tab;
+  if(tab==='visitor') renderVisitor();
+  if(tab==='ranking') renderRanking();
+  if(tab==='graph')   renderGraph();
+  if(tab==='backup')  renderBackupInfo();
+}
+
+// ---- UTILS ----
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ---- ROW MENU ----
+function toggleRowMenu(id, e){
+  e.stopPropagation();
+  const dd=document.getElementById(id);
+  if(!dd) return;
+  const isOpen=dd.classList.contains('open');
+  document.querySelectorAll('.row-menu-dd.open').forEach(el=>el.classList.remove('open'));
+  if(!isOpen) dd.classList.add('open');
+}
+document.addEventListener('click',()=>{
+  document.querySelectorAll('.row-menu-dd.open').forEach(el=>el.classList.remove('open'));
+});
+
+// ---- INIT ----
+_loadLocal();  // まずローカルデータを読み込み即時表示
+initMonthUI();
+renderAll();
+_setFbStatus(null, 'ローカル保存モード');
+
+// 保存済みFirebase設定があれば自動接続
+const _savedCfg = localStorage.getItem(FB_CONF_KEY);
+if(_savedCfg){
+  try{
+    const _cfg = JSON.parse(_savedCfg);
+    document.getElementById('fbConfigInput').value = JSON.stringify(_cfg, null, 2);
+    _initFirebase(_cfg);
+  }catch(_){}
+}
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</body>
+</html>
